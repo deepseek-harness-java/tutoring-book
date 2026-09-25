@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI 家教预约管家台 · Tutoring Book</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"PingFang SC","Microsoft YaHei",sans-serif; background:#f1f7f5; color:#16241f; }
+  header { background:linear-gradient(135deg,#1f6e54,#5aa88c); color:#fff; padding:18px 28px; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { font-size:20px; }
+  header .sub { font-size:12px; opacity:.85; margin-top:4px; }
+  header .badge { font-size:13px; background:rgba(255,255,255,.15); padding:6px 14px; border-radius:20px; }
+  main { display:grid; grid-template-columns:1fr 340px; gap:16px; padding:16px 20px; max-width:1240px; margin:0 auto; }
+  .col { display:flex; flex-direction:column; gap:16px; }
+  .card { background:#fff; border-radius:12px; padding:16px 18px; box-shadow:0 1px 4px rgba(31,110,84,.10); }
+  .card h2 { font-size:15px; margin-bottom:12px; color:#1f6e54; }
+  .stat { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .stat div { background:#e0efe9; border-radius:10px; padding:12px; }
+  .stat b { display:block; font-size:22px; color:#237a5c; margin-top:4px; }
+  .stat span { font-size:12px; color:#6d9184; }
+  .tag { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; }
+  .tag.g { background:#e3f4e9; color:#218a58; }
+  .tag.y { background:#fdf3e0; color:#c07f16; }
+  .tag.r { background:#fdeaea; color:#c74a44; }
+  .tag.b { background:#e7f0fb; color:#2e5fa3; }
+  .it { border:1px solid #cfe5dc; border-radius:10px; padding:10px 14px; margin-bottom:10px; }
+  .it .top { display:flex; justify-content:space-between; margin-bottom:4px; }
+  .it b { color:#1f6e54; font-size:13.5px; }
+  .it .meta { font-size:12.5px; color:#4d6660; line-height:1.7; }
+  .ai-panel { position:sticky; top:16px; display:flex; flex-direction:column; height:calc(100vh - 32px); background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 1px 4px rgba(31,110,84,.10); }
+  .ai-head { background:linear-gradient(135deg,#1f6e54,#5aa88c); color:#fff; padding:14px 16px; }
+  .ai-head b { font-size:15px; }
+  .ai-head .sub { font-size:11px; opacity:.85; margin-top:3px; }
+  .ai-body { flex:1; overflow-y:auto; padding:14px; font-size:13.5px; line-height:1.75; }
+  .ai-body .msg { margin-bottom:12px; white-space:pre-wrap; word-break:break-word; }
+  .ai-body .msg.user { background:#e0efe9; border-radius:10px 10px 2px 10px; padding:8px 12px; margin-left:24px; color:#16241f; }
+  .chips { padding:8px 14px; display:flex; flex-wrap:wrap; gap:6px; border-top:1px solid #d5e9e1; }
+  .chip { font-size:12px; background:#e0efe9; color:#1f6e54; border:none; border-radius:14px; padding:5px 10px; cursor:pointer; }
+  .chip:hover { background:#b9dccf; }
+  .ai-input { display:flex; gap:8px; padding:10px 14px; border-top:1px solid #d5e9e1; }
+  .ai-input input { flex:1; border:1px solid #bcd8ce; border-radius:8px; padding:9px 12px; font-size:13px; outline:none; }
+  .ai-input input:focus { border-color:#5aa88c; }
+  .ai-input button { background:#5aa88c; color:#fff; border:none; border-radius:8px; padding:0 18px; font-size:13px; cursor:pointer; }
+  .ai-input button:disabled { background:#9cc4b5; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>📚 AI 家教预约管家台</h1>
+    <div class="sub">课程 · 教师 · 购课排课 · 统计 | 一对一辅导云平台</div>
+  </div>
+  <div class="badge" id="topBadge">加载中…</div>
+</header>
+<main>
+  <div class="col">
+    <div class="card">
+      <h2>运营看板</h2>
+      <div class="stat" id="stats"></div>
+    </div>
+    <div class="card">
+      <h2>辅导课程</h2>
+      <div id="services"></div>
+    </div>
+    <div class="card">
+      <h2>最新订单</h2>
+      <div id="recent"></div>
+    </div>
+  </div>
+  <div class="ai-panel">
+    <div class="ai-head">
+      <b>📚 AI 家教预约管家</b>
+      <div class="sub">tutor-copilot · 课程 / 教师 / 购课排课 / 统计</div>
+    </div>
+    <div class="ai-body" id="aiBody"></div>
+    <div class="chips">
+      <button class="chip" onclick="ask('有哪些辅导课程，多少钱一课时？')">课程价目</button>
+      <button class="chip" onclick="ask('有哪些老师？擅长什么？')">教师查询</button>
+      <button class="chip" onclick="ask('帮孩子预约高中数学课，周五 19:00 开始，苏老师教，买 12 课时，家长钟女士 13800666666，学生小钟（高一），确认无误直接办理')">购课排课</button>
+      <button class="chip" onclick="ask('查一下订单 B6001 的状态')">订单查询</button>
+      <button class="chip" onclick="ask('今天运营情况怎么样？')">运营看板</button>
+    </div>
+    <div class="ai-input">
+      <input id="q" placeholder="例如：高中数学多少钱？；帮孩子约一节初中数理化，周五 19:00" onkeydown="if(event.key==='Enter')send()">
+      <button id="sendBtn" onclick="send()">发送</button>
+    </div>
+  </div>
+</main>
+<script>
+const j = r => Promise.resolve(r).then(resp => resp.json()).then(d => d.data ?? d);
+async function load() {
+  try {
+    const st = await j(fetch('/api/stats'));
+    document.getElementById('topBadge').textContent = `订单 ${st.totalOrders} · 待上课时 ${st.plannedSessions} · 预计营收 ¥${st.expectedRevenue}`;
+    document.getElementById('stats').innerHTML = `
+      <div><span>总单量</span><b>${st.totalOrders}</b></div>
+      <div><span>进行中</span><b>${st.ongoing}</b></div>
+      <div><span>已结课</span><b>${st.done}</b></div>
+      <div><span>待上课时</span><b>${st.plannedSessions}</b></div>`;
+    const ps = await j(fetch('/api/courses'));
+    document.getElementById('services').innerHTML = (ps.courses || ps).map(p => `
+      <div class="it">
+        <div class="top"><b>${p.course}</b><span class="tag g">¥${p.pricePerSession}/课时</span></div>
+        <div class="meta">${p.minutes} 分钟/课时 · ${p.desc}</div>
+      </div>`).join('');
+    document.getElementById('recent').innerHTML = `
+      <div class="it">
+        <div class="top"><b>B6001 · 薄先生</b><span class="tag y">已排课</span></div>
+        <div class="meta">初中数理化 · 林老师 · 周四 19:00 · 10 课时 · ¥2200</div>
+      </div>
+      <div class="it">
+        <div class="top"><b>B6002 · 臧女士</b><span class="tag b">授课中</span></div>
+        <div class="meta">高中数学 · 苏老师 · 周四 18:00 · 12 课时 · ¥3240</div>
+      </div>
+      <div class="it">
+        <div class="top"><b>B6003 · 历先生</b><span class="tag g">已结课</span></div>
+        <div class="meta">少儿编程 · 顾老师 · 周三 17:00 · 8 课时 · ¥2080</div>
+      </div>`;
+  } catch(e) { console.error(e); }
+}
+function ask(t) { const q=document.getElementById('q'); q.value=t; send(); }
+async function send() {
+  const inp = document.getElementById('q'), btn = document.getElementById('sendBtn');
+  const text = inp.value.trim(); if (!text || btn.disabled) return;
+  inp.value = ''; btn.disabled = true;
+  const body = document.getElementById('aiBody');
+  const u = document.createElement('div'); u.className = 'msg user'; u.textContent = text; body.appendChild(u);
+  const a = document.createElement('div'); a.className = 'msg'; a.textContent = '…'; body.appendChild(a);
+  try {
+    const resp = await fetch('/api/assistant/stream', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({message:text}) });
+    const reader = resp.body.getReader(), dec = new TextDecoder(); let buf = '', out = '';
+    for (;;) {
+      const {done, value} = await reader.read(); if (done) break;
+      buf += dec.decode(value, {stream:true});
+      const parts = buf.split('\n\n'); buf = parts.pop();
+      for (const p of parts) {
+        for (const line of p.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const dstr = line.slice(5).trim(); if (!dstr || dstr === '[DONE]') continue;
+          try {
+            const d = JSON.parse(dstr);
+            const piece = d.content ?? d.delta ?? '';
+            if (typeof piece === 'string' && piece) { out += piece; a.textContent = out; body.scrollTop = body.scrollHeight; }
+          } catch(e) {}
+        }
+      }
+    }
+    if (!out) a.textContent = '（无返回内容）';
+  } catch(e) { a.textContent = 'AI 服务暂时不可用：' + e.message; }
+  btn.disabled = false; body.scrollTop = body.scrollHeight;
+}
+load();
+</script>
+</body>
+</html>

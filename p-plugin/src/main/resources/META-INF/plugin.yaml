@@ -1,0 +1,6 @@
+id: tutor-copilot
+name: AI 家教预约管家
+version: 1.0.0
+author: xfg-studio
+description: AI 家教预约管家，支持课程价目（小学全科/初中数理化/高中数学/高中英语/少儿编程）、教师查询、预约排课（课时确认）、订单查询与运营统计。
+entrypoint: cn.xiaofuge.q.plugin.TutorPlugin
